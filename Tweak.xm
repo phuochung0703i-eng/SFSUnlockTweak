@@ -1,14 +1,29 @@
+#import <Foundation/Foundation.h>
+#import <StoreKit/StoreKit.h>
+#import <objc/runtime.h>
+
+attribute((constructor))
+static void init() {
+NSUserDefaults *d = [NSUserDefaults standardUserDefaults];
+[d setBool:YES forKey:@"all_purchases_unlocked"];
+[d setBool:YES forKey:@"all_parts_unlocked"];
+[d setBool:YES forKey:@"all_planets_unlocked"];
+[d setBool:YES forKey:@"sandbox_mode"];
+[d setBool:YES forKey:@"no_ads"];
+[d setBool:YES forKey:@"full_bundle"];
+[d setBool:YES forKey:@"dlc_unlocked"];
+[d setInteger:999999999 forKey:@"currency"];
+[d synchronize];
+
+```
 Class SKPaymentQueue = objc_getClass("SKPaymentQueue");
 if (SKPaymentQueue) {
     Method m1 = class_getInstanceMethod(SKPaymentQueue, @selector(finishTransaction:));
     if (m1) {
-        orig_finishTransaction = (void *)method_getImplementation(m1);
-        method_setImplementation(m1, (IMP)hook_finishTransaction);
-    }
-    Method m2 = class_getInstanceMethod(SKPaymentQueue, @selector(addPayment:));
-    if (m2) {
-        orig_addPayment = (void *)method_getImplementation(m2);
-        method_setImplementation(m2, (IMP)hook_addPayment);
+        method_setImplementation(m1, imp_implementationWithBlock(^(id self, SKPaymentTransaction *t) {
+            [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"sfs_all_unlocked"];
+            [[NSUserDefaults standardUserDefaults] synchronize];
+        }));
     }
 }
 
@@ -16,8 +31,7 @@ Class storeController = objc_getClass("StoreController");
 if (storeController) {
     Method m = class_getInstanceMethod(storeController, @selector(ProcessPurchase:));
     if (m) {
-        orig_ProcessPurchase = (void *)method_getImplementation(m);
-        method_setImplementation(m, (IMP)hook_ProcessPurchase);
+        method_setImplementation(m, imp_implementationWithBlock(^(id self, id purchase) {}));
     }
 }
 
@@ -27,13 +41,18 @@ for (NSString *name in classNames) {
     if (c) {
         Method m = class_getInstanceMethod(c, @selector(hasPurchased:));
         if (m) {
-            orig_hasPurchased = (BOOL (*)(id, SEL, NSString *))method_getImplementation(m);
-            method_setImplementation(m, (IMP)hook_hasPurchased);
+            method_setImplementation(m, imp_implementationWithBlock(^BOOL(id self, NSString *pid) {
+                return YES;
+            }));
         }
         Method m2 = class_getInstanceMethod(c, @selector(isProductPurchased:));
         if (m2) {
-            orig_isProductPurchased = (BOOL (*)(id, SEL, NSString *))method_getImplementation(m2);
-            method_setImplementation(m2, (IMP)hook_isProductPurchased);
+            method_setImplementation(m2, imp_implementationWithBlock(^BOOL(id self, NSString *pid) {
+                return YES;
+            }));
         }
     }
+}
+```
+
 }
