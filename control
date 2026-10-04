@@ -1,0 +1,9 @@
+Package: com.you.sfsunlock
+Name: SFSUnlock
+Version: 1.0
+Architecture: iphoneos-arm
+Description: Unlock all SFS
+Maintainer: you
+Author: you
+Section: Tweaks
+Depends: mobilesubstrate
